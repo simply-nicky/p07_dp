@@ -2,7 +2,8 @@ import numpy as np, h5py, sys, os, errno, concurrent.futures, argparse, matplotl
 from math import sqrt
 
 parent_path = "/asap3/petra3/gpfs/p07/2019/data/11005196"
-output_path = "../hdf5/Scan_{0:d}/scan_{0:d}_data.h5"
+output_path_data = "../hdf5/Scan_{0:d}/scan_{0:d}_data.h5"
+output_path_scan = "../hdf5/Scan_{0:d}/scan_{0:d}.h5"
 scan_path = "raw/scanFrames/Scan_{0:d}"
 log_path = "raw/Scans/Scan_{0:d}.log"
 hdf5_data_path = "/entry/instrument/detector/data"
@@ -68,11 +69,29 @@ def get_data(scan_num, detector, verbose):
     if verbose: print("Raw data shape: {}".format(raw_data.shape))
     return raw_data
 
-def write_data(scan_num, verbose):
+def get_stix(scan_num, verbose):
+    if verbose: print('Reading motor coordinates')
+    fast_crds, slow_crds, fast_size, slow_size = get_coords(scan_num, verbose)
+    if verbose: print('Reading detector data')
+    stix_sums = [get_data(scan_num, detector, verbose).sum(axis=(-2, -1)).reshape((fast_size, slow_size)) for detector in detectors.values()]
+    return stix_sums, fast_crds, slow_crds
+
+def show_data(scan_num, verbose):
+    stix_sums, fast_crds, slow_crds = get_stix(scan_num, verbose)
+    for stix, detector in zip(stix_sums, detectors):
+        fig, ax = plt.subplots(1, 1)
+        ax.imshow(stix, extent=[fast_crds.min(), fast_crds.max(), slow_crds.min(), slow_crds.max()], cmap='gist_gray')
+        ax.set_title(detector)
+        fig.show()
+
+def create_file(output_path, scan_num, verbose):
     out_path = os.path.join(os.path.dirname(__file__), output_path.format(scan_num))
     if verbose: print('Output path: %s' % out_path)
     make_output_dir(out_path)
-    out_file = h5py.File(out_path, 'w', libver='latest')
+    return h5py.File(out_path, 'w', libver='latest')
+
+def write_data(scan_num, verbose):
+    out_file = create_file(output_path_data, scan_num, verbose)
     det_group = out_file.create_group('detectors_data')
     for key, item in detectors.items():
         det_group.create_dataset(str(key), data=get_data(scan_num, item, verbose), compression='gzip')
@@ -86,25 +105,26 @@ def write_data(scan_num, verbose):
     out_file.close()
     if verbose: print('Done!')
 
-def show_data(scan_num, verbose):
-    if verbose: print('Reading motor coordinates')
-    fast_crds, slow_crds, fast_size, slow_size = get_coords(scan_num, verbose)
-    if verbose: print('Reading detector data')
-    stix_sums = [get_data(scan_num, detector, verbose).sum(axis=(-2, -1)).reshape((fast_size, slow_size)) for detector in detectors.values()]
-    for stix, detector in zip(stix_sums, detectors):
-        fig, ax = plt.subplots(1, 1)
-        ax.imshow(stix, extent=[fast_crds.min(), fast_crds.max(), slow_crds.min(), slow_crds.max()], cmap='gist_gray')
-        ax.set_title(detector)
-        fig.show()
+def write_stix(scan_num, verbose):
+    out_file = create_file(output_path_scan, scan_num, verbose)
+    scan_group = out_file.create_group('scans')
+    stix_sums, fast_crds, slow_crds = get_stix(scan_num, verbose)
+    for counter, detector in enumerate(detectors):
+        scan_group.create_dataset(detector, data=stix_sums[counter])
+    coord_group = out_file.create_group('motor_coordinates')
+    coord_group.create_dataset('fast_coordinates', data=fast_crds)
+    coord_group.create_dataset('slow_coordinates', data=slow_crds)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='P07 data processing script')
     parser.add_argument('snum', type=int, help='scan number')
-    parser.add_argument('action', type=str, choices=['show', 'save'], help='choose between show or save data')
+    parser.add_argument('action', type=str, choices=['show', 'save_data', 'save_scan'], help='choose between show or save data')
     parser.add_argument('-v', '--verbose', action='store_true', help='increase output verbosity')
     args = parser.parse_args()
 
-    if args.action == 'save':
+    if args.action == 'save_data':
         write_data(args.snum, args.verbose)
+    elif args.action == 'save_scan':
+        write_stix(args.snum, args.verbose)
     else:
         show_data(args.snum, args.verbose)
