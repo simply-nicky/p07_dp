@@ -1,4 +1,4 @@
-import numpy as np, h5py, sys, os, errno, argparse
+import numpy as np, h5py, sys, os, errno, concurrent.futures, argparse
 from math import sqrt
 
 parent_path = "/asap3/petra3/gpfs/p07/2019/data/11005196"
@@ -51,18 +51,20 @@ def get_coords(scan_num, verbose):
     if verbose: print("Number of coordinates: {:d}".format(len(fast_crds)))
     return np.array(fast_crds), np.array(slow_crds), fast_size, slow_size
 
+def get_point_data(path):
+    scanfile = h5py.File(path, 'r')
+    point_data = scanfile[hdf5_data_path][:]
+    return np.mean(point_data, axis=0)
+
 def get_data(scan_num, detector, verbose):
     dirname, filenames = get_filenames(scan_num, detector)
     if verbose: 
         print("Scan folder: %s" % dirname)
         print("Number of files: %d" % len(filenames))
     filenames.sort()
-    raw_data = []
-    for filename in filenames:
-        scanfile = h5py.File(os.path.join(dirname, filename), 'r')
-        point_data = scanfile[hdf5_data_path][:]
-        raw_data.append(np.mean(point_data, axis=0))
-    raw_data = np.array(raw_data)
+    filenames = [os.path.join(dirname, filename) for filename in filenames]
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        raw_data = np.array([point_data for point_data in executor.map(get_point_data, filenames)])
     if verbose: print("Raw data shape: {}".format(raw_data.shape))
     return raw_data
 
