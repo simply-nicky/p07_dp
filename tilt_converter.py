@@ -101,6 +101,11 @@ def show_data(scan_num, verbose):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='P07 data processing script')
     parser.add_argument('snum', type=int, help='scan number')
+    parser.add_argument('action', type=str, choices=['show', 'save'], help='choose between show or save data')
     parser.add_argument('-v', '--verbose', action='store_true', help='increase output verbosity')
     args = parser.parse_args()
-    write_data(args.snum, args.verbose)
+    
+    if args.action == 'save':
+        write_data(args.snum, args.verbose)
+    else:
+        show_data(args.snum, args.verbose)
