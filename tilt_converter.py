@@ -87,14 +87,13 @@ def write_data(scan_num, verbose):
     if verbose: print('Done!')
 
 def show_data(scan_num, verbose):
-    if verbose: print('Reading detector data')
-    raw_data = [get_data(scan_num, detector, verbose) for detector in detectors.values()]
     if verbose: print('Reading motor coordinates')
     fast_crds, slow_crds, fast_size, slow_size = get_coords(scan_num, verbose)
-    stix_sums = [data.sum(axis=(-2, -1)).reshape((fast_size, slow_size)) for data in raw_data]
+    if verbose: print('Reading detector data')
+    stix_sums = [get_data(scan_num, detector, verbose).sum(axis=(-2, -1)).reshape((fast_size, slow_size)) for detector in detectors.values()]
     for stix, detector in zip(stix_sums, detectors):
         fig, ax = plt.subplots()
-        ax = plt.imshow(stix, extend=[fast_crds.min(), fast_crds.max(), slow_crds.min(), slow_crds.max()], cmap='gist_gray')
+        ax = plt.imshow(stix, extent=[fast_crds.min(), fast_crds.max(), slow_crds.min(), slow_crds.max()], cmap='gist_gray')
         ax.set_title(detector)
         fig.show()
 
@@ -104,7 +103,7 @@ if __name__ == "__main__":
     parser.add_argument('action', type=str, choices=['show', 'save'], help='choose between show or save data')
     parser.add_argument('-v', '--verbose', action='store_true', help='increase output verbosity')
     args = parser.parse_args()
-    
+
     if args.action == 'save':
         write_data(args.snum, args.verbose)
     else:
