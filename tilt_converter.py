@@ -78,7 +78,7 @@ def write_data(scan_num, verbose):
     coord_group = out_file.create_group('motor_coordinates')
     coord_group.create_dataset('fast_coordinates', data=fast_crds)
     coord_group.create_dataset('slow_coordinates', data=slow_crds)
-    size_group = out_file('scan_size')
+    size_group = out_file.create_group('scan_size')
     size_group.create_dataset('fast_size', data=fast_size)
     size_group.create_dataset('slow_size', data=slow_size)
     out_file.close()
