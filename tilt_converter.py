@@ -92,8 +92,8 @@ def show_data(scan_num, verbose):
     if verbose: print('Reading detector data')
     stix_sums = [get_data(scan_num, detector, verbose).sum(axis=(-2, -1)).reshape((fast_size, slow_size)) for detector in detectors.values()]
     for stix, detector in zip(stix_sums, detectors):
-        fig, ax = plt.subplots()
-        ax = plt.imshow(stix, extent=[fast_crds.min(), fast_crds.max(), slow_crds.min(), slow_crds.max()], cmap='gist_gray')
+        fig, ax = plt.subplots(1, 1)
+        ax.imshow(stix, extent=[fast_crds.min(), fast_crds.max(), slow_crds.min(), slow_crds.max()], cmap='gist_gray')
         ax.set_title(detector)
         fig.show()
 
