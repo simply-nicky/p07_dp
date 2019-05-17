@@ -1,4 +1,4 @@
-import numpy as np, h5py, sys, os, errno, concurrent.futures, argparse
+import numpy as np, h5py, sys, os, errno, concurrent.futures, argparse, matplotlib.pyplot as plt
 from math import sqrt
 
 parent_path = "/asap3/petra3/gpfs/p07/2019/data/11005196"
@@ -85,6 +85,18 @@ def write_data(scan_num, verbose):
     size_group.create_dataset('slow_size', data=slow_size)
     out_file.close()
     if verbose: print('Done!')
+
+def show_data(scan_num, verbose):
+    if verbose: print('Reading detector data')
+    raw_data = [get_data(scan_num, detector, verbose) for detector in detectors.values()]
+    if verbose: print('Reading motor coordinates')
+    fast_crds, slow_crds, fast_size, slow_size = get_coords(scan_num, verbose)
+    stix_sums = [data.sum(axis=(-2, -1)).reshape((fast_size, slow_size)) for data in raw_data]
+    for stix, detector in zip(stix_sums, detectors):
+        fig, ax = plt.subplots()
+        ax = plt.imshow(stix, extend=[fast_crds.min(), fast_crds.max(), slow_crds.min(), slow_crds.max()], cmap='gist_gray')
+        ax.set_title(detector)
+        fig.show()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='P07 data processing script')
