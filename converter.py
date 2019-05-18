@@ -74,10 +74,11 @@ def get_stix(scan_num, verbose):
     fast_crds, slow_crds, fast_size, slow_size = get_coords(scan_num, verbose)
     if verbose: print('Reading detector data')
     stix_sums = [get_data(scan_num, detector, verbose).sum(axis=(-2, -1)) for detector in detectors.values()]
-    return stix_sums, fast_crds, slow_crds, fast_size, slow_size
+    stix_sums_full = [np.concatenate((stix, np.zeros(fast_size * slow_size - stix.size))).reshape((fast_size, slow_size)) for stix in stix_sums]
+    return stix_sums_full, fast_crds, slow_crds, fast_size, slow_size
 
 def show_data(scan_num, verbose):
-    stix_sums, fast_crds, slow_crds = get_stix(scan_num, verbose)
+    stix_sums, fast_crds, slow_crds = get_stix(scan_num, verbose)[0:3]
     for stix, detector in zip(stix_sums, detectors):
         fig, ax = plt.subplots(1, 1)
         ax.imshow(stix, extent=[fast_crds.min(), fast_crds.max(), slow_crds.min(), slow_crds.max()], cmap='gist_gray')
