@@ -75,6 +75,7 @@ def get_stix(scan_num, verbose):
     if verbose: print('Reading detector data')
     stix_sums = [get_data(scan_num, detector, verbose).sum(axis=(-2, -1)) for detector in detectors.values()]
     stix_sums_full = [np.concatenate((stix, np.zeros(fast_size * slow_size - stix.size))).reshape((fast_size, slow_size)) for stix in stix_sums]
+    if verbose: print("stxm array shape: {}".format(stix_sums_full.shape))
     return stix_sums_full, fast_crds, slow_crds, fast_size, slow_size
 
 def show_data(scan_num, verbose):
