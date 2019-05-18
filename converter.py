@@ -73,8 +73,8 @@ def get_stix(scan_num, verbose):
     if verbose: print('Reading motor coordinates')
     fast_crds, slow_crds, fast_size, slow_size = get_coords(scan_num, verbose)
     if verbose: print('Reading detector data')
-    stix_sums = [get_data(scan_num, detector, verbose).sum(axis=(-2, -1)).reshape((fast_size, slow_size)) for detector in detectors.values()]
-    return stix_sums, fast_crds, slow_crds
+    stix_sums = [get_data(scan_num, detector, verbose).sum(axis=(-2, -1)) for detector in detectors.values()]
+    return stix_sums, fast_crds, slow_crds, fast_size, slow_size
 
 def show_data(scan_num, verbose):
     stix_sums, fast_crds, slow_crds = get_stix(scan_num, verbose)
@@ -90,30 +90,35 @@ def create_file(output_path, scan_num, verbose):
     make_output_dir(out_path)
     return h5py.File(out_path, 'w', libver='latest')
 
-def write_data(scan_num, verbose):
-    out_file = create_file(output_path_data, scan_num, verbose)
-    det_group = out_file.create_group('detectors_data')
-    for key, item in detectors.items():
-        det_group.create_dataset(str(key), data=get_data(scan_num, item, verbose), compression='gzip')
-    fast_crds, slow_crds, fast_size, slow_size = get_coords(scan_num, verbose)
+def write_extra_data(out_file, fast_crds, slow_crds, fast_size, slow_size):
     coord_group = out_file.create_group('motor_coordinates')
     coord_group.create_dataset('fast_coordinates', data=fast_crds)
     coord_group.create_dataset('slow_coordinates', data=slow_crds)
     size_group = out_file.create_group('scan_size')
     size_group.create_dataset('fast_size', data=fast_size)
     size_group.create_dataset('slow_size', data=slow_size)
+
+def write_data(scan_num, verbose):
+    out_file = create_file(output_path_data, scan_num, verbose)
+    det_group = out_file.create_group('detectors_data')
+    for key, item in detectors.items():
+        det_group.create_dataset(str(key), data=get_data(scan_num, item, verbose), compression='gzip')
+    if verbose: print("writing supplementary data")
+    fast_crds, slow_crds, fast_size, slow_size = get_coords(scan_num, verbose)
+    write_extra_data(out_file, fast_crds, slow_crds, fast_size, slow_size)
     out_file.close()
     if verbose: print('Done!')
-
+    
 def write_stix(scan_num, verbose):
     out_file = create_file(output_path_scan, scan_num, verbose)
     scan_group = out_file.create_group('scans')
-    stix_sums, fast_crds, slow_crds = get_stix(scan_num, verbose)
+    stix_sums, fast_crds, slow_crds, fast_size, slow_size = get_stix(scan_num, verbose)
     for counter, detector in enumerate(detectors):
         scan_group.create_dataset(detector, data=stix_sums[counter])
-    coord_group = out_file.create_group('motor_coordinates')
-    coord_group.create_dataset('fast_coordinates', data=fast_crds)
-    coord_group.create_dataset('slow_coordinates', data=slow_crds)
+    if verbose: print("writing supplementary data")
+    write_extra_data(out_file, fast_crds, slow_crds, fast_size, slow_size)
+    out_file.close()
+    if verbose: print('Done!')
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='P07 data processing script')
