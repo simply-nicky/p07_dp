@@ -46,7 +46,7 @@ def get_coords(scan_num, verbose):
         parts = line.split(';')
         try:
             slow_crds.append(float(parts[-2].strip('um')))
-            fast_crds.append(float(parts[-2].strip('um')))
+            fast_crds.append(float(parts[-1].strip('um')))
         except:
             continue
     if verbose: print("Number of coordinates: {:d}".format(len(fast_crds)))
