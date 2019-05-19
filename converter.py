@@ -105,7 +105,7 @@ def create_file(output_path, scan_num, verbose):
     return h5py.File(out_path, 'w', libver='latest')
 
 def write_extra_data(out_file, fast_crds, slow_crds, fast_size, slow_size, verbose):
-    if verbose: print("writing supplementary data")
+    if verbose: print("Writing supplementary data")
     coord_group = out_file.create_group('motor_coordinates')
     coord_group.create_dataset('fast_coordinates', data=fast_crds)
     coord_group.create_dataset('slow_coordinates', data=slow_crds)
@@ -113,22 +113,24 @@ def write_extra_data(out_file, fast_crds, slow_crds, fast_size, slow_size, verbo
     size_group.create_dataset('fast_size', data=fast_size)
     size_group.create_dataset('slow_size', data=slow_size)
 
-def write_data(scan_num, verbose):
+def write_data(scan_num, scan_mode, verbose):
     out_file = create_file(output_path_data, scan_num, verbose)
     det_group = out_file.create_group('detectors_data')
+    worker = get_image_step if scan_mode == 'step' else get_image_fly
     for detector in detectors:
-        det_group.create_dataset(str(detector), data=get_data(scan_num, detector, verbose, get_image_step), compression='gzip')
+        det_group.create_dataset(str(detector), data=get_data(scan_num, detector, verbose, worker), compression='gzip')
     fast_crds, slow_crds, fast_size, slow_size = get_coords(scan_num, verbose)
     write_extra_data(out_file, fast_crds, slow_crds, fast_size, slow_size, verbose)
     out_file.close()
     if verbose: print('Done!')
     
-def write_stix(scan_num, verbose):
+def write_stix(scan_num, scan_mode, verbose):
     out_file = create_file(output_path_scan, scan_num, verbose)
     scan_group = out_file.create_group('scans')
     fast_crds, slow_crds, fast_size, slow_size = get_coords(scan_num, verbose)
     if verbose: print('Reading detector data')
-    stix_sums = [get_data(scan_num, detector, verbose, get_sum_step) for detector in detectors]
+    worker = get_image_step if scan_mode == 'step' else get_image_fly
+    stix_sums = [get_data(scan_num, detector, verbose, worker) for detector in detectors]
     stix_sums = [np.concatenate((stix, np.zeros(fast_size * slow_size - stix.size))).reshape((fast_size, slow_size)) for stix in stix_sums]
     for counter, detector in enumerate(detectors):
         scan_group.create_dataset(detector, data=stix_sums[counter])
@@ -139,11 +141,12 @@ def write_stix(scan_num, verbose):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='P07 data processing script')
     parser.add_argument('snum', type=int, help='scan number')
+    parser.add_argument('smod', type=str, choices=['step', 'fly'], help='scan mode')
     parser.add_argument('action', type=str, choices=['save_data', 'save_scan'], help='choose between show or save data')
     parser.add_argument('-v', '--verbose', action='store_true', help='increase output verbosity')
     args = parser.parse_args()
 
     if args.action == 'save_data':
-        write_data(args.snum, args.verbose)
+        write_data(args.snum, args.smod, args.verbose)
     else:
-        write_stix(args.snum, args.verbose)
+        write_stix(args.snum, args.smod, args.verbose)
