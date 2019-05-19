@@ -136,7 +136,7 @@ def write_stix(scan_num, scan_mode, verbose):
     scan_group = out_file.create_group('scans')
     fast_crds, slow_crds, fast_size, slow_size = get_coords_step(scan_num, verbose) if scan_mode == 'step' else get_coords_fly(scan_num, verbose)
     if verbose: print('Reading detector data')
-    worker = get_image_step if scan_mode == 'step' else get_image_fly
+    worker = get_sum_step if scan_mode == 'step' else get_sum_fly
     stix_sums = [get_data(scan_num, detector, verbose, worker) for detector in detectors]
     stix_sums = [np.concatenate((stix, np.zeros(fast_size * slow_size - stix.size))).reshape((fast_size, slow_size)) for stix in stix_sums]
     for counter, detector in enumerate(detectors):
