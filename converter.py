@@ -7,11 +7,17 @@ output_path_scan = "../hdf5/Scan_{0:d}/scan_{0:d}.h5"
 scan_path = "raw/scanFrames/Scan_{0:d}"
 log_path = "raw/Scans/Scan_{0:d}.log"
 hdf5_data_path = "/entry/instrument/detector/data"
-
 detectors = {"lambda_far": "_LambdaFar.nxs", "lambda_up": "_LambdaUp.nxs", "lambda_down": "_LambdaDown.nxs"}
 rois = {"lambda_far": (slice(140, 241), slice(146, 247)), "lambda_up": (slice(0, 301), slice(None)), "lambda_down": (slice(None), slice(None))}
 header = '#'
 sizeline = '# Points count:'
+
+calib_paths = {"lambda_far": "pixelmask_far", "lambda_up": "pixelmask_up", "lambda_down": "pixelmask_down"}
+calib_file = h5py.File(os.path.join(os.path.dirname(__file__), 'data_process.h5'), 'r')
+calib_data = dict([(detector, np.invert(calib_file[path][:].astype(bool))) for detector, path in calib_paths.items()])
+
+def apply_mask(frame, detector):
+    return np.where(calib_data[detector], frame, 0)
 
 def make_output_dir(path):
     try:
@@ -62,7 +68,7 @@ def get_data(scan_num, detector, verbose):
     filenames.sort()
     filenames = [os.path.join(dirname, filename) for filename in filenames]
     with concurrent.futures.ProcessPoolExecutor() as executor:
-        raw_data = np.array([point_data for point_data in executor.map(get_point_data, filenames)])
+        raw_data = np.array([apply_mask(point_data, detector) for point_data in executor.map(get_point_data, filenames)])
     if verbose: print("Raw data shape: {}".format(raw_data.shape))
     return raw_data
 
