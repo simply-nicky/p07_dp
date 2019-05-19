@@ -64,7 +64,7 @@ def get_coords_fly(scan_num, verbose):
     for line in lines[1::2]:
         parts = line.split(';')
         slow_crds.append(float(parts[-2].strip('um')))
-        slow_crds.extend([float(crd) for crd in parts[-1].split(',')][:fast_size])
+        fast_crds.extend([float(crd) for crd in parts[-1].split(',')][:fast_size])
     if verbose: print("Number of coordinates: {:d}".format(len(fast_crds)))
     return np.array(fast_crds), np.repeat(np.array(slow_crds), fast_size), fast_size, slow_size
 
