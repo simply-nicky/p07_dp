@@ -61,7 +61,7 @@ def get_coords(scan_num, verbose):
     if verbose: print("Number of coordinates: {:d}".format(len(fast_crds)))
     return np.array(fast_crds), np.array(slow_crds), fast_size, slow_size
 
-def get_image_step(path, detector, step_mode):
+def get_image_step(path, detector):
     scanfile = h5py.File(path, 'r')
     point_data = apply_mask(np.mean(scanfile[hdf5_data_path][:], axis=0), detector)
     scanfile.close()
@@ -73,7 +73,7 @@ def get_sum_step(path, detector):
     scanfile.close()
     return np.array([point_data[rois[detector]].sum()])
 
-def get_image_fly(path, detector, step_mode):
+def get_image_fly(path, detector):
     scanfile = h5py.File(path, 'r')
     line_data = scanfile[hdf5_data_path][:]
     scanfile.close()
