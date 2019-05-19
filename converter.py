@@ -66,7 +66,7 @@ def get_coords_fly(scan_num, verbose):
         slow_crds.append(float(parts[-2].strip('um')))
         fast_crds.extend([float(crd) for crd in parts[-1].split(',')][:fast_size])
     if verbose: print("Number of coordinates: {:d}".format(len(fast_crds)))
-    return np.array(fast_crds), np.repeat(np.array(slow_crds), fast_size), fast_size, slow_size
+    return np.array(fast_crds), np.repeat(np.array(slow_crds), fast_size), fast_size, slow_size - 1
 
 def get_image_step(path, detector):
     scanfile = h5py.File(path, 'r')
