@@ -34,7 +34,7 @@ def get_filenames(scan_num, detector):
     path = os.path.join(parent_path, scan_path.format(scan_num))
     return path, [file for file in os.listdir(path) if file.endswith(raw_filenames[detector])]
 
-def get_coords(scan_num, verbose):
+def get_log(scan_num, verbose):
     if verbose: print('Reading motor coordinates')
     logpath = os.path.join(parent_path, log_path.format(scan_num))
     if verbose: print("Log path: {}".format(logpath))
@@ -42,24 +42,31 @@ def get_coords(scan_num, verbose):
     for line in open(logpath, 'r'):
         if line.startswith(header):
             if line.startswith(sizeline):
-                try:
-                    sizes.append(int(line.strip(sizeline)))
-                except:
-                    continue
+                sizes.append(int(line.strip(sizeline)))
         else:
             lines.append(line)
-    fast_size, slow_size = sizes[2], sizes[1]
+    return lines, sizes[2], sizes[1]
+
+def get_coords_step(scan_num, verbose):
+    lines, fast_size, slow_size = get_log(scan_num, verbose)
     del lines[1::(2 * fast_size + 1)]
     slow_crds, fast_crds = [], []
     for line in lines[1::2]:
         parts = line.split(';')
-        try:
-            slow_crds.append(float(parts[-2].strip('um')))
-            fast_crds.append(float(parts[-1].strip('um\n')))
-        except:
-            continue
+        slow_crds.append(float(parts[-2].strip('um')))
+        fast_crds.append(float(parts[-1].strip('um\n')))
     if verbose: print("Number of coordinates: {:d}".format(len(fast_crds)))
     return np.array(fast_crds), np.array(slow_crds), fast_size, slow_size
+
+def get_coords_fly(scan_num, verbose):
+    lines, fast_size, slow_size = get_log(scan_num, verbose)
+    slow_crds, fast_crds = [], []
+    for line in lines[1::2]:
+        parts = line.split(';')
+        slow_crds.append(float(parts[-2].strip('um')))
+        slow_crds.extend([float(crd) for crd in parts[-1].split(',')][:fast_size])
+    if verbose: print("Number of coordinates: {:d}".format(len(fast_crds)))
+    return np.array(fast_crds), np.repeat(np.array(slow_crds), fast_size), fast_size, slow_size
 
 def get_image_step(path, detector):
     scanfile = h5py.File(path, 'r')
@@ -119,7 +126,7 @@ def write_data(scan_num, scan_mode, verbose):
     worker = get_image_step if scan_mode == 'step' else get_image_fly
     for detector in detectors:
         det_group.create_dataset(str(detector), data=get_data(scan_num, detector, verbose, worker), compression='gzip')
-    fast_crds, slow_crds, fast_size, slow_size = get_coords(scan_num, verbose)
+    fast_crds, slow_crds, fast_size, slow_size = get_coords_step(scan_num, verbose) if scan_mode == 'step' else get_coords_fly(scan_num, verbose)
     write_extra_data(out_file, fast_crds, slow_crds, fast_size, slow_size, verbose)
     out_file.close()
     if verbose: print('Done!')
@@ -127,7 +134,7 @@ def write_data(scan_num, scan_mode, verbose):
 def write_stix(scan_num, scan_mode, verbose):
     out_file = create_file(output_path_scan, scan_num, verbose)
     scan_group = out_file.create_group('scans')
-    fast_crds, slow_crds, fast_size, slow_size = get_coords(scan_num, verbose)
+    fast_crds, slow_crds, fast_size, slow_size = get_coords_step(scan_num, verbose) if scan_mode == 'step' else get_coords_fly(scan_num, verbose)
     if verbose: print('Reading detector data')
     worker = get_image_step if scan_mode == 'step' else get_image_fly
     stix_sums = [get_data(scan_num, detector, verbose, worker) for detector in detectors]
