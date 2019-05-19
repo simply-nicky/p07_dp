@@ -1,1 +1,1 @@
-from .tilt_converter import get_data, get_stix, get_coords, write_data, write_stix
+from .converter import get_data, write_data, write_stix

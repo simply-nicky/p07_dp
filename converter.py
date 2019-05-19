@@ -63,27 +63,27 @@ def get_coords(scan_num, verbose):
 
 def get_image_step(path, detector, step_mode):
     scanfile = h5py.File(path, 'r')
-    point_data = scanfile[hdf5_data_path][:]
+    point_data = apply_mask(np.mean(scanfile[hdf5_data_path][:], axis=0), detector)
     scanfile.close()
-    return apply_mask(np.mean(point_data, axis=0), detector)
+    return point_data[np.newaxis, :]
 
 def get_sum_step(path, detector):
     scanfile = h5py.File(path, 'r')
-    point_data = scanfile[hdf5_data_path][:]
+    point_data = apply_mask(np.mean(scanfile[hdf5_data_path][:], axis=0), detector)
     scanfile.close()
-    return apply_mask(np.mean(point_data, axis=0), detector)[rois[detector]].sum()
+    return np.array([point_data[rois[detector]].sum()])
 
 def get_image_fly(path, detector, step_mode):
     scanfile = h5py.File(path, 'r')
     line_data = scanfile[hdf5_data_path][:]
     scanfile.close()
-    return [apply_mask(data, detector) for data in line_data]
+    return np.array([apply_mask(data, detector) for data in line_data])
 
 def get_sum_fly(path, detector):
     scanfile = h5py.File(path, 'r')
     line_data = scanfile[hdf5_data_path][:]
     scanfile.close()
-    return [apply_mask(data, detector)[rois[detector]].sum() for data in line_data]
+    return np.array([apply_mask(data, detector)[rois[detector]].sum() for data in line_data])
 
 def get_data(scan_num, detector, verbose, process_func):
     dirname, filenames = get_filenames(scan_num, detector)
@@ -94,10 +94,9 @@ def get_data(scan_num, detector, verbose, process_func):
     filenames = [os.path.join(dirname, filename) for filename in filenames]
     worker = partial(process_func, detector=detector)
     with concurrent.futures.ProcessPoolExecutor() as executor:
-        raw_data = [point_data for point_data in executor.map(worker, filenames)]
-    raw_data = list(chain.from_iterable(raw_data))
-    if verbose: print("Raw data shape: {}".format(len(raw_data)))
-    return np.array(raw_data)
+        raw_data = np.concatenate((point_data for point_data in executor.map(worker, filenames)), axis=0)
+    if verbose: print("Raw data shape: {}".format(raw_data.shape))
+    return raw_data
 
 def create_file(output_path, scan_num, verbose):
     out_path = os.path.join(os.path.dirname(__file__), output_path.format(scan_num))
