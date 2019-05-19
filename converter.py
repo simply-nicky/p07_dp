@@ -8,11 +8,8 @@ scan_path = "raw/scanFrames/Scan_{0:d}"
 log_path = "raw/Scans/Scan_{0:d}.log"
 hdf5_data_path = "/entry/instrument/detector/data"
 
-detectors = {
-                "lambda_far": "_LambdaFar.nxs",
-                "lambda_up": "_LambdaUp.nxs",
-                "lambda_down": "_LambdaDown.nxs"
-            }
+detectors = {"lambda_far": "_LambdaFar.nxs", "lambda_up": "_LambdaUp.nxs", "lambda_down": "_LambdaDown.nxs"}
+rois = {"lambda_far": (slice(140, 241), slice(146, 247)), "lambda_up": (slice(0, 301), slice(None)), "lambda_down": (slice(None), slice(None))}
 header = '#'
 sizeline = '# Points count:'
 
@@ -73,7 +70,7 @@ def get_stix(scan_num, verbose):
     if verbose: print('Reading motor coordinates')
     fast_crds, slow_crds, fast_size, slow_size = get_coords(scan_num, verbose)
     if verbose: print('Reading detector data')
-    stix_sums = [get_data(scan_num, detector, verbose).sum(axis=(-2, -1)) for detector in detectors.values()]
+    stix_sums = [get_data(scan_num, detector, verbose)[roi].sum(axis=(-2, -1)) for roi, detector in zip(rois, detectors.values())]
     stix_sums_full = [np.concatenate((stix, np.zeros(fast_size * slow_size - stix.size))).reshape((fast_size, slow_size)) for stix in stix_sums]
     return stix_sums_full, fast_crds, slow_crds, fast_size, slow_size
 
