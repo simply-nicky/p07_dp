@@ -7,8 +7,11 @@ output_path_scan = "../hdf5/Scan_{0:d}/scan_{0:d}.h5"
 scan_path = "raw/scanFrames/Scan_{0:d}"
 log_path = "raw/Scans/Scan_{0:d}.log"
 hdf5_data_path = "/entry/instrument/detector/data"
-detectors = {"lambda_far": "_LambdaFar.nxs", "lambda_up": "_LambdaUp.nxs", "lambda_down": "_LambdaDown.nxs"}
+
+detectors = {"lambda_far", "lambda_up", "lambda_down"}
+raw_filenames = {"lambda_far": "_LambdaFar.nxs", "lambda_up": "_LambdaUp.nxs", "lambda_down": "_LambdaDown.nxs"}
 rois = {"lambda_far": (slice(140, 241), slice(146, 247)), "lambda_up": (slice(0, 301), slice(None)), "lambda_down": (slice(None), slice(None))}
+
 header = '#'
 sizeline = '# Points count:'
 
@@ -16,8 +19,8 @@ calib_paths = {"lambda_far": "pixelmask_far", "lambda_up": "pixelmask_up", "lamb
 calib_file = h5py.File(os.path.join(os.path.dirname(__file__), 'lambda_far_up_down_calibration.h5'), 'r')
 calib_data = dict([(detector, np.invert(calib_file[path][:].astype(bool))) for detector, path in calib_paths.items()])
 
-def apply_mask(frame, detector):
-    return np.where(calib_data[detector], frame, 0)
+def apply_mask(data, detector):
+    return np.where(calib_data[detector], data, 0)
 
 def make_output_dir(path):
     try:
@@ -27,7 +30,7 @@ def make_output_dir(path):
 
 def get_filenames(scan_num, detector):
     path = os.path.join(parent_path, scan_path.format(scan_num))
-    return path, [file for file in os.listdir(path) if file.endswith(detector)]
+    return path, [file for file in os.listdir(path) if file.endswith(raw_filenames[detector])]
 
 def get_coords(scan_num, verbose):
     logpath = os.path.join(parent_path, log_path.format(scan_num))
@@ -76,7 +79,7 @@ def get_stix(scan_num, verbose):
     if verbose: print('Reading motor coordinates')
     fast_crds, slow_crds, fast_size, slow_size = get_coords(scan_num, verbose)
     if verbose: print('Reading detector data')
-    stix_sums = [get_data(scan_num, detectors[key], verbose)[(slice(None),) + rois[key]].sum(axis=(-2, -1)) for key in detectors]
+    stix_sums = [get_data(scan_num, detector, verbose)[(slice(None),) + rois[detector]].sum(axis=(-2, -1)) for detector in detectors]
     stix_sums_full = [np.concatenate((stix, np.zeros(fast_size * slow_size - stix.size))).reshape((fast_size, slow_size)) for stix in stix_sums]
     return stix_sums_full, fast_crds, slow_crds, fast_size, slow_size
 
@@ -105,8 +108,8 @@ def write_extra_data(out_file, fast_crds, slow_crds, fast_size, slow_size):
 def write_data(scan_num, verbose):
     out_file = create_file(output_path_data, scan_num, verbose)
     det_group = out_file.create_group('detectors_data')
-    for key, item in detectors.items():
-        det_group.create_dataset(str(key), data=get_data(scan_num, item, verbose), compression='gzip')
+    for detector in detectors:
+        det_group.create_dataset(str(detector), data=get_data(scan_num, detector, verbose), compression='gzip')
     if verbose: print("writing supplementary data")
     fast_crds, slow_crds, fast_size, slow_size = get_coords(scan_num, verbose)
     write_extra_data(out_file, fast_crds, slow_crds, fast_size, slow_size)
