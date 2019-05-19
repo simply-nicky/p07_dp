@@ -95,7 +95,7 @@ def get_data(scan_num, detector, verbose, process_func):
     worker = partial(process_func, detector=detector)
     with concurrent.futures.ProcessPoolExecutor() as executor:
         raw_data = [point_data for point_data in executor.map(worker, filenames)]
-    raw_data = np.array(np.array(chain.from_iterable(raw_data)))
+    raw_data = np.array(chain.from_iterable(raw_data))
     if verbose: print("Raw data shape: {}".format(raw_data.shape))
     return raw_data
 
