@@ -78,8 +78,9 @@ def get_data(scan_num, detector, verbose, process_func):
         print("Number of files: %d" % len(filenames))
     filenames.sort()
     filenames = [os.path.join(dirname, filename) for filename in filenames]
+    worker = partial(process_func, detector=detector)
     with concurrent.futures.ProcessPoolExecutor() as executor:
-        raw_data = np.array([point_data for point_data in executor.map(process_func, filenames)])
+        raw_data = np.array([point_data for point_data in executor.map(worker, filenames)])
     if verbose: print("Raw data shape: {}".format(raw_data.shape))
     return raw_data
 
@@ -87,7 +88,7 @@ def get_stix(scan_num, verbose):
     if verbose: print('Reading motor coordinates')
     fast_crds, slow_crds, fast_size, slow_size = get_coords(scan_num, verbose)
     if verbose: print('Reading detector data')
-    stix_sums = [get_data(scan_num, detector, verbose, partial(get_point_sum, detector=detector)) for detector in detectors]
+    stix_sums = [get_data(scan_num, detector, verbose, get_point_sum) for detector in detectors]
     stix_sums_full = [np.concatenate((stix, np.zeros(fast_size * slow_size - stix.size))).reshape((fast_size, slow_size)) for stix in stix_sums]
     return stix_sums_full, fast_crds, slow_crds, fast_size, slow_size
 
@@ -117,7 +118,7 @@ def write_data(scan_num, verbose):
     out_file = create_file(output_path_data, scan_num, verbose)
     det_group = out_file.create_group('detectors_data')
     for detector in detectors:
-        det_group.create_dataset(str(detector), data=get_data(scan_num, detector, verbose, partial(get_point_image, detector=detector)), compression='gzip')
+        det_group.create_dataset(str(detector), data=get_data(scan_num, detector, verbose, get_point_image), compression='gzip')
     if verbose: print("writing supplementary data")
     fast_crds, slow_crds, fast_size, slow_size = get_coords(scan_num, verbose)
     write_extra_data(out_file, fast_crds, slow_crds, fast_size, slow_size)
@@ -130,7 +131,7 @@ def write_stix(scan_num, verbose):
     stix_sums, fast_crds, slow_crds, fast_size, slow_size = get_stix(scan_num, verbose)
     for counter, detector in enumerate(detectors):
         scan_group.create_dataset(detector, data=stix_sums[counter])
-    if verbose: print("writing supplementary data")
+    if verbose: print("Writing supplementary data")
     write_extra_data(out_file, fast_crds, slow_crds, fast_size, slow_size)
     out_file.close()
     if verbose: print('Done!')
