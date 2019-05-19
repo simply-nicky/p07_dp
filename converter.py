@@ -1,5 +1,6 @@
 import numpy as np, h5py, sys, os, errno, concurrent.futures, argparse, matplotlib.pyplot as plt
 from math import sqrt
+from functools import partial
 
 parent_path = "/asap3/petra3/gpfs/p07/2019/data/11005196"
 output_path_data = "../hdf5/Scan_{0:d}/scan_{0:d}_data.h5"
@@ -58,12 +59,19 @@ def get_coords(scan_num, verbose):
     if verbose: print("Number of coordinates: {:d}".format(len(fast_crds)))
     return np.array(fast_crds), np.array(slow_crds), fast_size, slow_size
 
-def get_point_data(path):
+def get_point_image(path, detector):
     scanfile = h5py.File(path, 'r')
     point_data = scanfile[hdf5_data_path][:]
-    return np.mean(point_data, axis=0)
+    scanfile.close()
+    return apply_mask(np.mean(point_data, axis=0), detector)
 
-def get_data(scan_num, detector, verbose):
+def get_point_sum(path, detector):
+    scanfile = h5py.File(path, 'r')
+    point_data = scanfile[hdf5_data_path][:]
+    scanfile.close()
+    return apply_mask(np.mean(point_data, axis=0), detector)[(slice(None),) + rois[detector]].sum(axis=(-2, -1))
+
+def get_data(scan_num, detector, verbose, process_func):
     dirname, filenames = get_filenames(scan_num, detector)
     if verbose: 
         print("Scan folder: %s" % dirname)
@@ -71,7 +79,7 @@ def get_data(scan_num, detector, verbose):
     filenames.sort()
     filenames = [os.path.join(dirname, filename) for filename in filenames]
     with concurrent.futures.ProcessPoolExecutor() as executor:
-        raw_data = np.array([apply_mask(point_data, detector) for point_data in executor.map(get_point_data, filenames)])
+        raw_data = np.array([point_data for point_data in executor.map(process_func, filenames)])
     if verbose: print("Raw data shape: {}".format(raw_data.shape))
     return raw_data
 
@@ -79,7 +87,7 @@ def get_stix(scan_num, verbose):
     if verbose: print('Reading motor coordinates')
     fast_crds, slow_crds, fast_size, slow_size = get_coords(scan_num, verbose)
     if verbose: print('Reading detector data')
-    stix_sums = [get_data(scan_num, detector, verbose)[(slice(None),) + rois[detector]].sum(axis=(-2, -1)) for detector in detectors]
+    stix_sums = [get_data(scan_num, detector, verbose, partial(get_point_sum, detector=detector)) for detector in detectors]
     stix_sums_full = [np.concatenate((stix, np.zeros(fast_size * slow_size - stix.size))).reshape((fast_size, slow_size)) for stix in stix_sums]
     return stix_sums_full, fast_crds, slow_crds, fast_size, slow_size
 
@@ -109,7 +117,7 @@ def write_data(scan_num, verbose):
     out_file = create_file(output_path_data, scan_num, verbose)
     det_group = out_file.create_group('detectors_data')
     for detector in detectors:
-        det_group.create_dataset(str(detector), data=get_data(scan_num, detector, verbose), compression='gzip')
+        det_group.create_dataset(str(detector), data=get_data(scan_num, detector, verbose, partial(get_point_image, detector=detector)), compression='gzip')
     if verbose: print("writing supplementary data")
     fast_crds, slow_crds, fast_size, slow_size = get_coords(scan_num, verbose)
     write_extra_data(out_file, fast_crds, slow_crds, fast_size, slow_size)
