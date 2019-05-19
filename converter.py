@@ -13,7 +13,7 @@ header = '#'
 sizeline = '# Points count:'
 
 calib_paths = {"lambda_far": "pixelmask_far", "lambda_up": "pixelmask_up", "lambda_down": "pixelmask_down"}
-calib_file = h5py.File(os.path.join(os.path.dirname(__file__), 'data_process.h5'), 'r')
+calib_file = h5py.File(os.path.join(os.path.dirname(__file__), 'lambda_far_up_down_calibration.h5'), 'r')
 calib_data = dict([(detector, np.invert(calib_file[path][:].astype(bool))) for detector, path in calib_paths.items()])
 
 def apply_mask(frame, detector):
