@@ -69,7 +69,7 @@ def get_point_sum(path, detector):
     scanfile = h5py.File(path, 'r')
     point_data = scanfile[hdf5_data_path][:]
     scanfile.close()
-    return apply_mask(np.mean(point_data, axis=0), detector)[(slice(None),) + rois[detector]].sum(axis=(-2, -1))
+    return apply_mask(np.mean(point_data, axis=0), detector)[rois[detector]].sum(axis=(-2, -1))
 
 def get_data(scan_num, detector, verbose, process_func):
     dirname, filenames = get_filenames(scan_num, detector)
