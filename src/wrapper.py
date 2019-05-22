@@ -131,5 +131,7 @@ class FlyScan(Scan):
 
     @classmethod
     def chunk_sum(cls, path, Detector):
+        print("Filename: {}".format(path))
+        print("Detector: {}".format(Detector))
         _chunk = h5py.File(path, 'r')[Detector.hdf5_data_path][:]
         return np.array([Detector.apply_mask(_frame)[Detector.roi].sum() for _frame in _chunk])
