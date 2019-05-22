@@ -64,8 +64,9 @@ def get_data(filenames, worker, verbose):
     if verbose: 
         print("Scan folder: {}".format(os.path.dirname(filenames[0])))
         print("Number of files: {}".format(len(filenames)))
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        data = np.concatenate([chunk for chunk in executor.map(worker, filenames)], axis=0)
+    data = worker(filenames[0])
+    # with concurrent.futures.ProcessPoolExecutor() as executor:
+    #     data = np.concatenate([chunk for chunk in executor.map(worker, filenames)], axis=0)
     if verbose: print("Raw data shape: {}".format(data.shape))
     return data
 
