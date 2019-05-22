@@ -15,8 +15,8 @@ class Detector(metaclass=ABCMeta):
     @abstractproperty
     def calib(self): pass
     
-    @abstractclassmethod
-    def __str__(cls): pass
+    @abstractproperty
+    def name(self): pass
 
     @classmethod
     def apply_mask(cls, data):
@@ -30,28 +30,19 @@ class LambdaFar(Detector):
     raw_filename = "_LambdaFar.nxs"
     roi = (slice(140, 241), slice(146, 247))
     calib = np.invert(utils.calib_file["pixelmask_far"][:].astype(bool))
-
-    @classmethod
-    def __str__(cls):
-        return "lambda_far"
+    name = "lambda_far"
 
 class LambdaDown(Detector):
     raw_filename = "_LambdaDown.nxs"
     roi = (slice(None), slice(None))
     calib = np.invert(utils.calib_file["pixelmask_down"][:].astype(bool))
-
-    @classmethod
-    def __str__(cls):
-        return "lambda_down"
+    name = "lambda_down"
 
 class LambdaUp(Detector):
     raw_filename = "_LambdaUp.nxs"
     roi = (slice(0, 301), slice(None))
     calib = np.invert(utils.calib_file["pixelmask_up"][:].astype(bool))
-
-    @classmethod
-    def __str__(cls):
-        return "lambda_up"
+    name = "lambda_up"
 
 class StepMotorCoordinates(object):
     def __init__(self, scan_num, verbose):
