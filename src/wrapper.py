@@ -104,8 +104,10 @@ class Scan(object):
         pass
         
 class StepScan(Scan):
-    def __init__(self, scan_num, scan_mode, verbose):
-        self.scan_num, self.scan_mode, self.verbose = scan_num, scan_mode, verbose
+    scan_mode = 'step'
+
+    def __init__(self, scan_num, verbose):
+        self.scan_num, self.verbose = scan_num, verbose
 
     @classmethod
     def chunk(path, Detector):
@@ -120,8 +122,10 @@ class StepScan(Scan):
         return np.array([_chunk.sum()])
 
 class FlyScan(Scan):
-    def __init__(self, scan_num, scan_mode, verbose):
-        self.scan_num, self.scan_mode, self.verbose = scan_num, scan_mode, verbose
+    scan_mode = 'fly'
+
+    def __init__(self, scan_num, verbose):
+        self.scan_num, self.verbose = scan_num, verbose
 
     @classmethod
     def chunk(path, Detector):
