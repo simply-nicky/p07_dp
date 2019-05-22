@@ -1,6 +1,6 @@
 import numpy as np, h5py, concurrent.futures
 from . import utils
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractmethod, abstractproperty, abstractclassmethod
 from functools import partial
 
 class Detector(metaclass=ABCMeta):
@@ -72,13 +72,11 @@ class Scan(object):
     @abstractproperty
     def coords(self): pass
 
-    @staticmethod
-    @abstractmethod
-    def chunk(path, Detector): pass
+    @abstractclassmethod
+    def chunk(cls, path, Detector): pass
 
-    @staticmethod
-    @abstractmethod
-    def chunk_sum(path, Detector): pass
+    @abstractclassmethod
+    def chunk_sum(cls, path, Detector): pass
 
     def data(self, Detector):
         _filenames = Detector.filenames(self.scan_num, self.verbose)
@@ -109,14 +107,14 @@ class StepScan(Scan):
     def __init__(self, scan_num, verbose):
         self.scan_num, self.verbose, self.coords = scan_num, verbose, StepMotorCoordinates(scan_num, verbose)
 
-    @staticmethod
-    def chunk(path, Detector):
+    @classmethod
+    def chunk(cls, path, Detector):
         _file = h5py.File(path, 'r')
         _chunk = Detector.apply_mask(np.mean(_file[Detector.hdf5_data_path][:], axis=0))
         return _chunk[np.newaxis, :]
 
-    @staticmethod
-    def chunk_sum(path, Detector):
+    @classmethod
+    def chunk_sum(cls, path, Detector):
         _file = h5py.File(path, 'r')
         _chunk = Detector.apply_mask(np.mean(_file[Detector.hdf5_data_path][:], axis=0))
         return np.array([_chunk.sum()])
@@ -127,14 +125,14 @@ class FlyScan(Scan):
     def __init__(self, scan_num, verbose):
         self.scan_num, self.verbose, self.coords = scan_num, verbose, FlyMotorCoordinates(scan_num, verbose)
 
-    @staticmethod
-    def chunk(path, Detector):
+    @classmethod
+    def chunk(cls, path, Detector):
         print("Filename: {}".format(path))
         print("Detector: {}".format(Detector))
         _chunk = h5py.File(path, 'r')[Detector.hdf5_data_path][:]
         return np.array([Detector.apply_mask(_frame) for _frame in _chunk])
 
-    @staticmethod
-    def chunk_sum(path, Detector):
+    @classmethod
+    def chunk_sum(cls, path, Detector):
         _chunk = h5py.File(path, 'r')[Detector.hdf5_data_path][:]
         return np.array([Detector.apply_mask(_frame)[Detector.roi].sum() for _frame in _chunk])
