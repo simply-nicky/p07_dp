@@ -73,10 +73,10 @@ class Scan(object):
     def coords(self): pass
 
     @abstractclassmethod
-    def chunk(path, Detector): pass
+    def chunk(cls, path, Detector): pass
 
     @abstractclassmethod
-    def chunk_sum(path, Detector): pass
+    def chunk_sum(cls, path, Detector): pass
 
     def data(self, Detector):
         _filenames = Detector.filenames(self.scan_num, self.verbose)
@@ -85,8 +85,9 @@ class Scan(object):
 
     def stxm(self, Detector):
         _filenames = Detector.filenames(self.scan_num, self.verbose)
-        _worker = partial(Scan.chunk_sum, Detector=Detector)
-        return utils.get_data(_filenames, _worker, self.verbose)
+        Scan.chunk(_filenames[0], Detector)
+        # _worker = partial(Scan.chunk_sum, Detector=Detector)
+        # return utils.get_data(_filenames, _worker, self.verbose)
 
     def full_data(self):
         return dict([(str(_Detector), self.data(_Detector)) for _Detector in [LambdaUp, LambdaFar, LambdaDown]])
@@ -108,6 +109,7 @@ class StepScan(Scan):
 
     @classmethod
     def chunk(cls, path, Detector):
+        if cls.verbose: print("Filename: {}".format(path))
         _file = h5py.File(path, 'r')
         _chunk = Detector.apply_mask(np.mean(_file[Detector.hdf5_data_path][:], axis=0))
         if cls.verbose: print("Chunk size: {}".format(_chunk.shape))
@@ -127,8 +129,10 @@ class FlyScan(Scan):
         self.scan_num, self.verbose, self.coords = scan_num, verbose, FlyMotorCoordinates(scan_num, verbose)
 
     @classmethod
-    def chunk(path, Detector):
+    def chunk(cls, path, Detector):
+        if cls.verbose: print("Filename: {}".format(path))
         _chunk = h5py.File(path, 'r')[Detector.hdf5_data_path][:]
+        if cls.verbose: print("Chunk size: {}".format(_chunk.shape))
         return np.array([Detector.apply_mask(_frame) for _frame in _chunk])
 
     @classmethod
