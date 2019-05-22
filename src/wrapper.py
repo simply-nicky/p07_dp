@@ -107,15 +107,17 @@ class StepScan(Scan):
         self.scan_num, self.verbose, self.coords = scan_num, verbose, StepMotorCoordinates(scan_num, verbose)
 
     @classmethod
-    def chunk(path, Detector):
+    def chunk(cls, path, Detector):
         _file = h5py.File(path, 'r')
         _chunk = Detector.apply_mask(np.mean(_file[Detector.hdf5_data_path][:], axis=0))
+        if cls.verbose: print("Chunk size: {}".format(_chunk.shape))
         return _chunk[np.newaxis, :]
 
     @classmethod
-    def chunk_sum(path, Detector):
+    def chunk_sum(cls, path, Detector):
         _file = h5py.File(path, 'r')
         _chunk = Detector.apply_mask(np.mean(_file[Detector.hdf5_data_path][:], axis=0))
+        if cls.verbose: print("Chunk size: {}".format(_chunk.shape))
         return np.array([_chunk.sum()])
 
 class FlyScan(Scan):
