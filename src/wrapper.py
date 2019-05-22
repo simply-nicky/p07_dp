@@ -65,9 +65,6 @@ class Scan(object):
 
     @abstractproperty
     def scan_num(self): pass
-
-    @abstractproperty
-    def scan_mode(self): pass
     
     @abstractproperty
     def verbose(self): pass
@@ -104,10 +101,10 @@ class Scan(object):
         pass
         
 class StepScan(Scan):
-    scan_mode = 'step'
+    scan_num, verbose, coords = None, None, None
 
     def __init__(self, scan_num, verbose):
-        self.scan_num, self.verbose = scan_num, verbose
+        self.scan_num, self.verbose, self.coords = scan_num, verbose, StepMotorCoordinates(scan_num, verbose)
 
     @classmethod
     def chunk(path, Detector):
@@ -122,10 +119,10 @@ class StepScan(Scan):
         return np.array([_chunk.sum()])
 
 class FlyScan(Scan):
-    scan_mode = 'fly'
+    scan_num, verbose, coords = None, None, None
 
     def __init__(self, scan_num, verbose):
-        self.scan_num, self.verbose = scan_num, verbose
+        self.scan_num, self.verbose, self.coords = scan_num, verbose, FlyMotorCoordinates(scan_num, verbose)
 
     @classmethod
     def chunk(path, Detector):
