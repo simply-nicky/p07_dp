@@ -109,6 +109,7 @@ class StepScan(Scan):
 
     @classmethod
     def chunk(cls, path, Detector):
+        print(cls.verbose)
         if cls.verbose: print("Filename: {}".format(path))
         _file = h5py.File(path, 'r')
         _chunk = Detector.apply_mask(np.mean(_file[Detector.hdf5_data_path][:], axis=0))
@@ -130,6 +131,7 @@ class FlyScan(Scan):
 
     @classmethod
     def chunk(cls, path, Detector):
+        print(cls.verbose)
         if cls.verbose: print("Filename: {}".format(path))
         _chunk = h5py.File(path, 'r')[Detector.hdf5_data_path][:]
         if cls.verbose: print("Chunk size: {}".format(_chunk.shape))
