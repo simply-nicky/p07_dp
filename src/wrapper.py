@@ -85,9 +85,8 @@ class Scan(object):
 
     def stxm(self, Detector):
         _filenames = Detector.filenames(self.scan_num, self.verbose)
-        self.chunk(_filenames[0], Detector)
-        # _worker = partial(self.chunk_sum, Detector=Detector)
-        # return utils.get_data(_filenames, _worker, self.verbose)
+        _worker = partial(self.chunk_sum, Detector=Detector)
+        return utils.get_data(_filenames, _worker, self.verbose)
 
     def full_data(self):
         return dict([(str(_Detector), self.data(_Detector)) for _Detector in [LambdaUp, LambdaFar, LambdaDown]])
@@ -127,8 +126,6 @@ class FlyScan(Scan):
 
     @classmethod
     def chunk(cls, path, Detector):
-        print("Filename: {}".format(path))
-        print("Detector: {}".format(Detector))
         _chunk = h5py.File(path, 'r')[Detector.hdf5_data_path][:]
         return np.array([Detector.apply_mask(_frame) for _frame in _chunk])
 
