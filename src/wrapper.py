@@ -85,7 +85,7 @@ class Scan(object):
 
     def stxm(self, Detector):
         _filenames = Detector.filenames(self.scan_num, self.verbose)
-        _worker = partial(self.chunk_sum, Detector=Detector, cls=type(self))
+        _worker = partial(self.chunk_sum, Detector=Detector)
         return utils.get_data(_filenames, _worker, self.verbose)
 
     def full_data(self):
