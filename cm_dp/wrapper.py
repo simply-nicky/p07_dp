@@ -122,10 +122,8 @@ class Scan(object):
     def full_stxm(self):
         _det_str = [_Detector.name for _Detector in [LambdaUp, LambdaFar, LambdaDown]]
         _full_stxm = [self.stxm(_Detector) for _Detector in [LambdaUp, LambdaFar, LambdaDown]]
-        for counter, _stxm in enumerate(_full_stxm):
-            if counter != 1:
-                _full_stxm[counter] = _stxm / _full_stxm[1].ravel()
-            _full_stxm[counter] = np.concatenate((_stxm, np.zeros(self.coords.fast_size * self.coords.slow_size - _stxm.size))).reshape(self.coords.shape)
+        _full_stxm[0] /= _full_stxm[1]; _full_stxm[2] /= _full_stxm[1]
+        _full_stxm = [utils.pad_stxm(_stxm, self.coords.fast_size, self.coords.slow_size) for _stxm in _full_stxm]
         return dict(zip(_det_str, _full_stxm))
 
     def write_data(self):
