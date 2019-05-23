@@ -93,9 +93,9 @@ class Viewer(QtGui.QMainWindow):
         for counter, (image, label) in enumerate(zip(images, labels)):
             _label_widget = QtGui.QLabel(label)
             _label_widget.setAlignment(QtCore.Qt.AlignCenter)
-            self.grid_layout.addWidget(_label_widget, row=0, col=counter)
+            self.grid_layout.addWidget(_label_widget, 0, counter)
             _image_view = pg.ImageView()
             _image_view.setImage(img=image)
-            self.grid_layout.addWidget(_image_view, row=1, col=counter)
+            self.grid_layout.addWidget(_image_view, 1, counter)
         self.grid_layout.setRowStretch(0, 1)
         self.grid_layout.setRowStretch(1, 10)
