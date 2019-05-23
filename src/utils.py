@@ -72,20 +72,10 @@ def get_data(filenames, worker, verbose):
 def pad_stxm(stxm, fast_size, slow_size):
     return np.concatenate(stxm, np.zeros(fast_size * slow_size - stxm.size)).reshape((fast_size, slow_size))
 
-# def create_file(output_path, scan_num, verbose):
-#     out_path = os.path.join(os.path.dirname(__file__), output_path.format(scan_num))
-#     if verbose: print('Output path: %s' % out_path)
-#     make_output_dir(out_path)
-#     return h5py.File(out_path, 'w', libver='latest')
-
-# def write_extra_data(out_file, fast_crds, slow_crds, fast_size, slow_size, verbose):
-#     if verbose: print("Writing supplementary data")
-#     coord_group = out_file.create_group('motor_coordinates')
-#     coord_group.create_dataset('fast_coordinates', data=fast_crds)
-#     coord_group.create_dataset('slow_coordinates', data=slow_crds)
-#     size_group = out_file.create_group('scan_size')
-#     size_group.create_dataset('fast_size', data=fast_size)
-#     size_group.create_dataset('slow_size', data=slow_size)
+def create_file(out_path, verbose):
+    if verbose: print('Output path: %s' % out_path)
+    make_output_dir(out_path)
+    return h5py.File(out_path, 'w', libver='latest')
 
 # def write_data(scan_num, scan_mode, verbose):
 #     out_file = create_file(output_path_data, scan_num, verbose)

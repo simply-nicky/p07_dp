@@ -44,21 +44,44 @@ class LambdaUp(Detector):
     calib = np.invert(utils.calib_file["pixelmask_up"][:].astype(bool))
     name = "lambda_up"
 
-class StepMotorCoordinates(object):
+class MotorCoordinates(metaclass=ABCMeta):
+    @abstractproperty
+    def fast_crds(self): pass
+
+    @abstractproperty
+    def slow_crds(self): pass
+
+    @abstractproperty
+    def fast_size(self): pass
+
+    @abstractproperty
+    def slow_size(self): pass
+
+    @property
+    def shape(self):
+        return self.fast_crds, self.slow_crds
+    
+    def write(self, out_file, verbose):
+        if verbose: print("Writing motor coordinates")
+        _coord_group = out_file.create_group('motor_coordinates')
+        _coord_group.create_dataset('fast_coordinates', data=self.fast_crds)
+        _coord_group.create_dataset('slow_coordinates', dat=self.slow_crds)
+        _size_group= out_file.create_group('scan_size')
+        if verbose: print("Scan size: {}".format(self.shape))
+        _size_group.create_dataset('fast_size', data=self.fast_size)
+        _size_group.create_dataset('slow_size', data=self.slow_size)
+
+class StepMotorCoordinates(MotorCoordinates):
+    fast_crds, slow_crds, fast_size, slow_size = None, None, None, None
+
     def __init__(self, scan_num, verbose):
         self.fast_crds, self.slow_crds, self.fast_size, self.slow_size = utils.get_coords_step(scan_num, verbose)
 
-    @property
-    def shape(self):
-        return self.fast_size, self.slow_size
+class FlyMotorCoordinates(MotorCoordinates):
+    fast_crds, slow_crds, fast_size, slow_size = None, None, None, None
 
-class FlyMotorCoordinates(object):
     def __init__(self, scan_num, verbose):
         self.fast_crds, self.slow_crds, self.fast_size, self.slow_size = utils.get_coords_fly(scan_num, verbose)
-
-    @property
-    def shape(self):
-        return self.fast_size, self.slow_size
 
 class Scan(object):
     __metaclass__ = ABCMeta
@@ -89,16 +112,31 @@ class Scan(object):
         return utils.get_data(_filenames, _worker, self.verbose)
 
     def full_data(self):
-        return dict([(str(_Detector), self.data(_Detector)) for _Detector in [LambdaUp, LambdaFar, LambdaDown]])
+        return dict([(_Detector.name, self.data(_Detector)) for _Detector in [LambdaUp, LambdaFar, LambdaDown]])
 
     def full_stxm(self):
-        _det_str = [str(_Detector) for _Detector in [LambdaUp, LambdaFar, LambdaDown]]
+        _det_str = [_Detector.name for _Detector in [LambdaUp, LambdaFar, LambdaDown]]
         _full_stxm = [self.stxm(_Detector) for _Detector in [LambdaUp, LambdaFar, LambdaDown]]
         _full_stxm = [utils.pad_stxm(_stxm / _full_stxm[1], self.coords.fast_size, self.coords.slow_size).reshape(self.coords.shape) for _stxm in _full_stxm]
         return dict(zip(_det_str, _full_stxm))
 
-    def write(self):
-        pass
+    def write_data(self):
+        _out_file = utils.create_file(utils.output_path_data.format(self.scan_num), self.verbose)
+        _det_group = _out_file.create_group('detector_data')
+        for detector, data in self.full_data():
+            _det_group.create_dataset(detector, data=data, compression='gzip')
+        self.coords.write(_out_file, self.verbose)
+        _out_file.close()
+        if self.verbose: print("Done!")
+
+    def write_stxm(self):
+        _out_file = utils.create_file(utils.output_path_data.format(self.scan_num), self.verbose)
+        _det_group = _out_file.create_group('detector_data')
+        for detector, data in self.full_stxm():
+            _det_group.create_dataset(detector, data=data)
+        self.coords.write(_out_file, self.verbose)
+        _out_file.close()
+        if self.verbose: print("Done!")
         
 class StepScan(Scan):
     scan_num, verbose, coords = None, None, None
@@ -131,7 +169,5 @@ class FlyScan(Scan):
 
     @classmethod
     def chunk_sum(cls, path, Detector):
-        print("Filename: {}".format(path))
-        print("Detector: {}".format(Detector))
         _chunk = h5py.File(path, 'r')[Detector.hdf5_data_path][:]
         return np.array([Detector.apply_mask(_frame)[Detector.roi].sum() for _frame in _chunk])
