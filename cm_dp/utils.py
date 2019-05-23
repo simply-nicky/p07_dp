@@ -77,15 +77,25 @@ def create_file(out_path, verbose):
     return h5py.File(out_path, 'w', libver='latest')
 
 class Viewer(QtGui.QMainWindow):
-    def __init__(self):
-        super(Viewer, self).__init__()
+    def __init__(self, images, labels, parent=None, size=(720, 480)):
+        super(Viewer, self).__init__(parent=parent, size=size)
         self.setWindowTitle('CM Viewer')
-        self.box_layout = QtGui.QHBoxLayout()
+        self.update_ui(images, labels)
+
         self.central_widget = QtGui.QWidget()
-        self.central_widget.setLayout(self.box_layout)
+        self.central_widget.setLayout(self.grid_layout)
         self.setCentralWidget(self.central_widget)
 
         self.show()
 
-    def add_image(self, image, label):
-        pass
+    def update_ui(self, images, labels):
+        self.grid_layout = QtGui.QGridLayout()
+        for counter, (image, label) in enumerate(zip(images, labels)):
+            _label_widget = QtGui.QLabel(label)
+            _label_widget.setAlignment(QtCore.Qt.AlignCenter)
+            self.grid_layout.addWidget(_label_widget, row=0, col=counter)
+            _image_view = pg.ImageView()
+            _image_view.setImage(img=image)
+            self.grid_layout.addWidget(_image_view, row=1, col=counter)
+        self.grid_layout.setRowStretch(0, 1)
+        self.grid_layout.setRowStretch(1, 10)
