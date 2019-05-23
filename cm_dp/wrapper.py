@@ -123,7 +123,7 @@ class Scan(object):
     def write_data(self):
         _out_file = utils.create_file(utils.output_path_data.format(self.scan_num), self.verbose)
         _det_group = _out_file.create_group('detector_data')
-        for detector, data in self.full_data():
+        for detector, data in self.full_data().items():
             _det_group.create_dataset(detector, data=data, compression='gzip')
         self.coords.write(_out_file, self.verbose)
         _out_file.close()
@@ -132,7 +132,7 @@ class Scan(object):
     def write_stxm(self):
         _out_file = utils.create_file(utils.output_path_data.format(self.scan_num), self.verbose)
         _det_group = _out_file.create_group('detector_data')
-        for detector, stxm in self.full_stxm():
+        for detector, stxm in self.full_stxm().items():
             _det_group.create_dataset(detector, data=stxm)
         self.coords.write(_out_file, self.verbose)
         _out_file.close()
@@ -142,7 +142,7 @@ class Scan(object):
         app = pg.mkQApp()
         _win = pg.GraphicsWindow(title="STXM viewer")
         _win.resize(640, 480)
-        for detector, stxm in self.full_stxm():
+        for detector, stxm in self.full_stxm().items():
             _box = _win.addViewBox(lockAspect=True)
             _img = pg.ImageItem(stxm)
             _box.addItem(_img)
