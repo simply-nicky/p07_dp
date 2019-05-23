@@ -1,4 +1,4 @@
-import numpy as np, h5py, concurrent.futures
+import numpy as np, h5py, concurrent.futures, argparse
 from . import utils
 from abc import ABCMeta, abstractmethod, abstractproperty, abstractclassmethod
 from functools import partial
@@ -171,3 +171,17 @@ class FlyScan(Scan):
     def chunk_sum(cls, path, Detector):
         _chunk = h5py.File(path, 'r')[Detector.hdf5_data_path][:]
         return np.array([Detector.apply_mask(_frame)[Detector.roi].sum() for _frame in _chunk])
+
+def main():
+    parser = argparse.ArgumentParser(description='Compton microscopy data processing script')
+    parser.add_argument('snum', type=int, help='scan number')
+    parser.add_argument('smod', type=str, choices=['step', 'fly'], help='scan mode')
+    parser.add_argument('mode', type=str, choices=['save_stxm', 'save_data'], help='choose between saving raw data or stxm')
+    parser.add_argument('-v', '--verbose', action='store_true', help='increase output verbosity')
+    args = parser.parse_args()
+
+    scan = StepScan(args.snum, args.verbose) if args.smod == 'step' else FlyScan(args.snum, args.verbose)
+    if args.action == 'save_data':
+        scan.write_data()
+    else:
+        scan.write_stxm()
