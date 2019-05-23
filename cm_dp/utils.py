@@ -77,7 +77,7 @@ def create_file(out_path, verbose):
     return h5py.File(out_path, 'w', libver='latest')
 
 class Viewer(QtGui.QMainWindow):
-    def __init__(self, images, labels, parent=None, size=(720, 480)):
+    def __init__(self, images, labels, parent=None, size=(1440, 480)):
         super(Viewer, self).__init__(parent=parent, size=QtCore.QSize(size[0], size[1]))
         self.setWindowTitle('CM Viewer')
         self.update_ui(images, labels)
@@ -93,9 +93,8 @@ class Viewer(QtGui.QMainWindow):
         for counter, (image, label) in enumerate(zip(images, labels)):
             _label_widget = QtGui.QLabel(label)
             _label_widget.setAlignment(QtCore.Qt.AlignCenter)
+            _label_widget.setFixedHeight(20)
             self.grid_layout.addWidget(_label_widget, 0, counter)
             _image_view = pg.ImageView()
             _image_view.setImage(img=image)
             self.grid_layout.addWidget(_image_view, 1, counter)
-        self.grid_layout.setRowStretch(0, 1)
-        self.grid_layout.setRowStretch(1, 10)
