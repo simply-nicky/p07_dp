@@ -85,5 +85,7 @@ class Viewer(QtGui.QMainWindow):
         self.central_widget.setLayout(self.box_layout)
         self.setCentralWidget(self.central_widget)
 
+        self.show()
+
     def add_image(self, image, label):
         pass
