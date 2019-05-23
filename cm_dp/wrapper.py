@@ -1,7 +1,12 @@
-import numpy as np, h5py, argparse
+import numpy as np, h5py, argparse, sys
 from . import utils
 from abc import ABCMeta, abstractmethod, abstractproperty, abstractclassmethod
 from functools import partial
+
+try:
+    from PyQt5 import QtCore, QtGui
+except ImportError:
+    from PyQt4 import QtCore, QtGui
 
 class Detector(metaclass=ABCMeta):
     hdf5_data_path = "/entry/instrument/detector/data"
@@ -139,10 +144,9 @@ class Scan(object):
         if self.verbose: print("Done!")
 
     def show_stxm(self):
-        _viewer = utils.Viewer()
-        for detector, stxm in self.full_stxm().items():
-            _viewer.add_image(stxm, detector)
-        _viewer.run()
+        _app = QtGui.QApplication([])
+        _ = utils.Viewer()
+        sys.exit(_app.exec_())
 
         
 class StepScan(Scan):

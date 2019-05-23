@@ -1,5 +1,9 @@
 import numpy as np, h5py, sys, os, errno, concurrent.futures, pyqtgraph as pg
-from pyqtgraph.Qt import QtCore, QtGui
+
+try:
+    from PyQt5 import QtCore, QtGui
+except ImportError:
+    from PyQt4 import QtCore, QtGui
 
 parent_path = "/asap3/petra3/gpfs/p07/2019/data/11005196"
 output_path_data = "../../hdf5/Scan_{0:d}/scan_{0:d}_data.h5"
@@ -72,21 +76,14 @@ def create_file(out_path, verbose):
     make_output_dir(out_path)
     return h5py.File(out_path, 'w', libver='latest')
 
-class Viewer(object):
+class Viewer(QtGui.QMainWindow):
     def __init__(self):
-        pg.mkQApp()
-        self.win, self.gl = pg.GraphicsWindow(title='CM Viewer', size=(640, 480)), pg.GraphicsLayout()
-        self.counter = 0
-        self.win.setCentralWidget(self.gl)
-        self.win.show()
+        super(Viewer, self).__init__()
+        self.setWindowTitle('CM Viewer')
+        self.box_layout = QtGui.QHBoxLayout()
+        self.central_widget = QtGui.QWidget()
+        self.setLayout(self.box_layout)
+        self.setCentralWidget(self.central_widget)
 
     def add_image(self, image, label):
-        self.gl.addLabel(text=label, row=0, col=self.counter)
-        _imv = pg.ImageView()
-        _imv.setImage(image)
-        self.gl.addItem(item=_imv.getView(), row=1, col=self.counter)
-        self.counter +=1
-
-    def run(self):
-        if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
-            QtGui.QApplication.instance().exec_()
+        pass
