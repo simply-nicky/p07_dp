@@ -117,7 +117,7 @@ class Scan(object):
     def full_stxm(self):
         _det_str = [_Detector.name for _Detector in [LambdaUp, LambdaFar, LambdaDown]]
         _full_stxm = [self.stxm(_Detector) for _Detector in [LambdaUp, LambdaFar, LambdaDown]]
-        _full_stxm = [utils.pad_stxm(_stxm / _full_stxm[1], self.coords.fast_size, self.coords.slow_size).reshape(self.coords.shape) for _stxm in _full_stxm]
+        _full_stxm = [utils.pad_stxm(_stxm, self.coords.fast_size, self.coords.slow_size).reshape(self.coords.shape) for _stxm in _full_stxm]
         return dict(zip(_det_str, _full_stxm))
 
     def write_data(self):
