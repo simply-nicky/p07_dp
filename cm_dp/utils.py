@@ -85,7 +85,7 @@ class Viewer(object):
         self.gl.addViewBox(row=1, col=self.counter)
         _imv = pg.ImageView()
         _imv.setImage(image)
-        self.gl.getItem(row=1, col=self.counter).addItem(imv)
+        self.gl.getItem(row=1, col=self.counter).addItem(_imv)
         self.counter +=1
 
     def run(self):
