@@ -142,7 +142,7 @@ class Scan(object):
         app = pg.mkQApp()
         _win = pg.GraphicsWindow(title="STXM viewer")
         _win.resize(640, 480)
-        for detector, stxm in self.full_stxm().items():
+        for stxm in self.full_stxm().values():
             _box = _win.addViewBox(lockAspect=True)
             _img = pg.ImageItem(stxm)
             _box.addItem(_img)
