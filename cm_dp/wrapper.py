@@ -190,12 +190,14 @@ def main():
     parser = argparse.ArgumentParser(description='Compton microscopy data processing script')
     parser.add_argument('snum', type=int, help='scan number')
     parser.add_argument('smod', type=str, choices=['step', 'fly'], help='scan mode')
-    parser.add_argument('mode', type=str, choices=['save_stxm', 'save_data'], help='choose between saving raw data or stxm')
+    parser.add_argument('mode', type=str, choices=['save_stxm', 'save_data', 'show_stxm'], help='choose between saving raw data or stxm')
     parser.add_argument('-v', '--verbose', action='store_true', help='increase output verbosity')
     args = parser.parse_args()
 
     scan = StepScan(args.snum, args.verbose) if args.smod == 'step' else FlyScan(args.snum, args.verbose)
     if args.action == 'save_data':
         scan.write_data()
-    else:
+    elif args.atcion == 'save_stxm':
         scan.write_stxm()
+    else:
+        scan.show_stxm()
