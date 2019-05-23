@@ -1,4 +1,4 @@
-import numpy as np, h5py, concurrent.futures, argparse, pyqtgraph as pg
+import numpy as np, h5py, argparse
 from . import utils
 from abc import ABCMeta, abstractmethod, abstractproperty, abstractclassmethod
 from functools import partial
@@ -139,14 +139,11 @@ class Scan(object):
         if self.verbose: print("Done!")
 
     def show_stxm(self):
-        app = pg.mkQApp()
-        _win = pg.GraphicsWindow(title="STXM viewer")
-        _win.resize(640, 480)
-        for stxm in self.full_stxm().values():
-            _box = _win.addViewBox(lockAspect=True)
-            _img = pg.ImageItem(stxm)
-            _box.addItem(_img)
-        _win.show()
+        _viewer = utils.Viewer()
+        for detector, stxm in self.full_stxm().items():
+            _viewer.add_image(stxm, detector)
+        _viewer.run()
+
         
 class StepScan(Scan):
     scan_num, verbose, coords = None, None, None

@@ -1,7 +1,5 @@
-import numpy as np, h5py, sys, os, errno, concurrent.futures, argparse, matplotlib.pyplot as plt
-from math import sqrt
-from functools import partial
-from itertools import chain
+import numpy as np, h5py, sys, os, errno, concurrent.futures, pyqtgraph as pg
+from pyqtgraph.qt import QtCore, QtGui
 
 parent_path = "/asap3/petra3/gpfs/p07/2019/data/11005196"
 output_path_data = "../../hdf5/Scan_{0:d}/scan_{0:d}_data.h5"
@@ -73,3 +71,22 @@ def create_file(out_path, verbose):
     if verbose: print('Output path: %s' % out_path)
     make_output_dir(out_path)
     return h5py.File(out_path, 'w', libver='latest')
+
+class Viewer(object):
+    def __init__(self):
+        pg.mkQApp()
+        self.win, self.gl = pg.GraphicsWindow(title='CM Viewer', size=(640, 480)), pg.GraphicsLayout()
+        self.counter = 0
+        self.win.setCentralWidget(self.gl)
+        self.win.show()
+
+    def add_image(self, image, label):
+        self.gl.addLabel(text=label, row=0, col=self.counter)
+        self.gl.addViewBox(row=1, col=self.counter)
+        imv = pg.ImageItem(image=image)
+        self.gl.getItem(row=1, col=self.counter).addItem(imv)
+        self.counter +=1
+
+    def run(self):
+        if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
+            QtGui.QApplication.instance().exec_()
