@@ -1,4 +1,4 @@
-import numpy as np, h5py, concurrent.futures, argparse
+import numpy as np, h5py, concurrent.futures, argparse, pyqtgraph as pg
 from . import utils
 from abc import ABCMeta, abstractmethod, abstractproperty, abstractclassmethod
 from functools import partial
@@ -132,11 +132,21 @@ class Scan(object):
     def write_stxm(self):
         _out_file = utils.create_file(utils.output_path_data.format(self.scan_num), self.verbose)
         _det_group = _out_file.create_group('detector_data')
-        for detector, data in self.full_stxm():
-            _det_group.create_dataset(detector, data=data)
+        for detector, stxm in self.full_stxm():
+            _det_group.create_dataset(detector, data=stxm)
         self.coords.write(_out_file, self.verbose)
         _out_file.close()
         if self.verbose: print("Done!")
+
+    def show_stxm(self):
+        app = pg.mkQApp()
+        _win = pg.GraphicsWindow(title="STXM viewer")
+        _win.resize(640, 480)
+        for detector, stxm in self.full_stxm():
+            _box = _win.addViewBox(lockAspect=True)
+            _img = pg.ImageItem(stxm)
+            _box.addItem(_img)
+        _win.show()
         
 class StepScan(Scan):
     scan_num, verbose, coords = None, None, None
