@@ -1,5 +1,5 @@
 import numpy as np, h5py, sys, os, errno, concurrent.futures, pyqtgraph as pg
-from pyqtgraph.qt import QtCore, QtGui
+from pyqtgraph.Qt import QtCore, QtGui
 
 parent_path = "/asap3/petra3/gpfs/p07/2019/data/11005196"
 output_path_data = "../../hdf5/Scan_{0:d}/scan_{0:d}_data.h5"
