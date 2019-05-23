@@ -82,7 +82,7 @@ class Viewer(QtGui.QMainWindow):
         self.setWindowTitle('CM Viewer')
         self.box_layout = QtGui.QHBoxLayout()
         self.central_widget = QtGui.QWidget()
-        self.setLayout(self.box_layout)
+        self.central_widget.setLayout(self.box_layout)
         self.setCentralWidget(self.central_widget)
 
     def add_image(self, image, label):
