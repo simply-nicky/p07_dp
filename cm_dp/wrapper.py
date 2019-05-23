@@ -146,7 +146,8 @@ class Scan(object):
     def show_stxm(self):
         _app = QtGui.QApplication([])
         _ = utils.Viewer()
-        sys.exit(_app.exec_())
+        if sys.flags.interactive != 1 or not hasattr(QtCore, 'PYQT_VERSION'):
+            _app.exec_()
 
         
 class StepScan(Scan):
