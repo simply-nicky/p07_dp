@@ -78,7 +78,7 @@ def create_file(out_path, verbose):
 
 class Viewer(QtGui.QMainWindow):
     def __init__(self, images, labels, parent=None, size=(720, 480)):
-        super(Viewer, self).__init__(parent=parent, size=size)
+        super(Viewer, self).__init__(parent=parent, size=QtCore.QSize(size[0], size[1]))
         self.setWindowTitle('CM Viewer')
         self.update_ui(images, labels)
 
