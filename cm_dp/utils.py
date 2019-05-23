@@ -82,9 +82,9 @@ class Viewer(object):
 
     def add_image(self, image, label):
         self.gl.addLabel(text=label, row=0, col=self.counter)
-        self.gl.addViewBox(row=1, col=self.counter)
-        imv = pg.ImageItem(image=image)
-        self.gl.getItem(row=1, col=self.counter).addItem(imv)
+        _imv = pg.ImageView()
+        _imv.setImage(image)
+        self.gl.addItem(_imv, row=1, col=self.counter)
         self.counter +=1
 
     def run(self):
