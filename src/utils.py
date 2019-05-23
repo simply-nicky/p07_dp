@@ -70,7 +70,7 @@ def get_data(filenames, worker, verbose):
     return data
 
 def pad_stxm(stxm, fast_size, slow_size):
-    return np.concatenate(stxm, np.zeros(fast_size * slow_size - stxm.size)).reshape((fast_size, slow_size))
+    return np.concatenate((stxm, np.zeros(fast_size * slow_size - stxm.size))).reshape((fast_size, slow_size))
 
 def create_file(out_path, verbose):
     if verbose: print('Output path: %s' % out_path)
